@@ -1,3 +1,8 @@
 tmp/
 functions.zip
 **/*.ignore.*
+
+Gemfile.lock
+Gemfile.local
+.bundle/
+.DS_Store

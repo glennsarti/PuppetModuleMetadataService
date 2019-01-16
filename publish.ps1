@@ -11,7 +11,7 @@ if (Test-Path $zipfile) { Remove-Item -Path $zipfile -Force -Confirm:$false | Ou
 Push-Location functions
 
 Write-Host "Creating zip archive...." -ForegroundColor Green
-& 7za a "..\$zipfile" *.rb
+& 7za a "..\$zipfile" *.rb -ir!vendor '-xr!.bundle'
 
 Pop-Location
 

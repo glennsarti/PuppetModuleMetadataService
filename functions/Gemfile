@@ -1,0 +1,41 @@
+source ENV['GEM_SOURCE'] || "https://rubygems.org"
+
+# -=-=-=-=-=- WARNING -=-=-=-=-=-
+# There should be NO runtime gem dependencies here.  In production this code will be running using the Ruby
+# runtime provided by Puppet.  That means no native extensions and NO BUNDLER.  All runtime dependences should
+# be re-vendored and then the load path modified appropriately.
+#
+# This gemfile only exists to help when developing the language server and running tests
+# -=-=-=-=-=- WARNING -=-=-=-=-=-
+
+# Ruby in Lambda is 2.5, there Puppet Gem must be 6.0 or above
+
+# We should only need the Puppet gem and it's dependencies
+if ENV['PUPPET_GEM_VERSION']
+  gem 'puppet', ENV['PUPPET_GEM_VERSION'], :require => false
+else
+  gem 'puppet',                            :require => false
+end
+case RUBY_PLATFORM
+when /darwin/
+  gem 'CFPropertyList'
+end
+# Gems for building release tarballs etc.
+gem "archive-zip", :require => false
+gem "minitar"    , :require => false
+
+# We only need these gems if we're not actually in AWS
+# or compiling a valid AWS bundle
+if ENV['AWS_LAMBDA_FUNCTION_NAME'].nil? && ENV['AWS_EXECUTION_ENV'].nil?
+  gem 'aws-sdk-s3', :require => false
+end
+
+# Evaluate Gemfile.local if it exists
+if File.exists? "#{__FILE__}.local"
+  eval(File.read("#{__FILE__}.local"), binding)
+end
+
+# Evaluate ~/.gemfile if it exists
+if File.exists?(File.join(Dir.home, '.gemfile'))
+  eval(File.read(File.join(Dir.home, '.gemfile')), binding)
+end

@@ -33,11 +33,14 @@ def process(event:, context:)
     s3object = S3_CLIENT.get_object(object)
     s3objecttags = S3_CLIENT.get_object_tagging(object)
     tags = process_s3tags(s3objecttags.tag_set)
-    if (tags['createrequest'] == 'true')
-      return { statusCode: 202, body: JSON.generate("Already submitted for extraction") }
+    s3content = s3object.body.read
+
+    if tags['createrequest'] == 'true'
+      body = JSON.parse(s3content)
+      body[:message] = "Already queued for extraction"
+      return { statusCode: 202, body: JSON.generate(body) }
     end
 
-    s3content = s3object.body.read
     return { statusCode: 200, body: s3content }
   rescue Aws::S3::Errors::NoSuchKey
     # The object does not exist so queue it up to be created.
@@ -52,11 +55,6 @@ def process(event:, context:)
       module_version:    module_version,
     },
     content: {
-      readme: "",
-      metadata_json: { },
-      classes: [ ],
-      functions: [ ],
-      types: [ ]
     }
   }
   request = {
@@ -65,8 +63,9 @@ def process(event:, context:)
     key: s3_key,
     tagging: "createrequest=true",
   }
-  #resp = S3_CLIENT.put_object(request)
+  resp = S3_CLIENT.put_object(request)
 
+  body[:message] = "Queued for extraction"
   { statusCode: 202, body: JSON.generate(body) }
 end
 
